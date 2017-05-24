@@ -2,7 +2,7 @@ import UIKit
 import CoreLocation
 import MapKit
 
-class HomeViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, CLLocationManagerDelegate {
+class HomeViewController: UIViewController {
     
     @IBOutlet weak var mapView: MKMapView!
     
@@ -17,7 +17,7 @@ class HomeViewController: UIViewController, UITableViewDataSource, UITableViewDe
         return lmanager
     }()
     
-    var pointsList: [(pointName:String, local:String, latitude:String, longitude:String)] = []
+    var pointsList = [Point]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -49,14 +49,37 @@ class HomeViewController: UIViewController, UITableViewDataSource, UITableViewDe
         }
     }
     
+    
+    func markMapPoint(point:Point)
+    {
+        var loc:CLLocationCoordinate2D = CLLocationCoordinate2D()
+        loc.latitude = CLLocationDegrees(Double(point.Latitude)!)
+        loc.longitude = CLLocationDegrees(Double(point.Longitude)!)
+
+        let cam:MKMapCamera = MKMapCamera()
+        cam.altitude = pow(2,10)
+        cam.centerCoordinate = loc
+        mapView.setCamera(cam, animated: true)
+        
+        let annotation = MKPointAnnotation()
+        annotation.coordinate = loc
+        annotation.title = point.Name
+        
+        mapView.addAnnotation(annotation)
+    }
+    
+}
+
+extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! PointsListCustomCell
         
-        cell.lblPointName.text = pointsList[indexPath.row].pointName
-        cell.lblLocal.text = pointsList[indexPath.row].local
-        cell.lblLatitude.text = pointsList[indexPath.row].latitude
-        cell.lblLongitude.text = pointsList[indexPath.row].longitude
+        cell.lblPointName.text = pointsList[indexPath.row].Name
+        cell.lblLocal.text = pointsList[indexPath.row].Local
+        cell.lblLatitude.text = pointsList[indexPath.row].Latitude
+        cell.lblLongitude.text = pointsList[indexPath.row].Longitude
         
         return cell
     }
@@ -68,32 +91,18 @@ class HomeViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        let latitude = Double(pointsList[indexPath.row].latitude)
-        let longitude = Double(pointsList[indexPath.row].longitude)
-        let pointName = pointsList[indexPath.row].pointName
-        let local = pointsList[indexPath.row].local
+        let Latitude = pointsList[indexPath.row].Latitude
+        let Longitude = pointsList[indexPath.row].Longitude
+        let Name = pointsList[indexPath.row].Name
+        let Local = pointsList[indexPath.row].Local
         
-        self.markMapPoint(latitude: latitude!, longitude: longitude!, pointName: pointName, local: local)
+        let SelectedPoint = Point(Name: Name, Local: Local, Latitude: Latitude, Longitude: Longitude)
+        
+        self.markMapPoint(point: SelectedPoint)
     }
-    
-    func markMapPoint(latitude:Double, longitude:Double, pointName:String, local:String)
-    {
-        var loc:CLLocationCoordinate2D = CLLocationCoordinate2D()
-        loc.latitude = CLLocationDegrees(latitude)
-        loc.longitude = CLLocationDegrees(longitude)
+}
 
-        let cam:MKMapCamera = MKMapCamera()
-        cam.altitude = pow(2,10)
-        cam.centerCoordinate = loc
-        mapView.setCamera(cam, animated: true)
-        
-        let annotation = MKPointAnnotation()
-        annotation.coordinate = loc
-        annotation.title = pointName
-        
-       
-        mapView.addAnnotation(annotation)
-    }
+extension HomeViewController: CLLocationManagerDelegate {
     
     func locationManager(manager: CLLocation!, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
         
@@ -110,9 +119,6 @@ class HomeViewController: UIViewController, UITableViewDataSource, UITableViewDe
                 
                 locationManager.startUpdatingLocation()
             }
-            
         }
     }
 }
-
-
